@@ -1,0 +1,136 @@
+{
+  "info": {
+    "name": "Medical Billing Automation API",
+    "_postman_id": "med-billing-v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "token",   "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json(); pm.collectionVariables.set('token', r.access_token);"] } }],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/token",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              { "key": "username", "value": "admin@billing.com" },
+              { "key": "password", "value": "admin123" }
+            ]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bills",
+      "item": [
+        {
+          "name": "Upload Bill (sync extract)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "POST", "url": "{{baseUrl}}/api/bills/extract-sync",
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "file", "type": "file", "src": "sample_doctor_bill.pdf" }
+            ]}
+          }
+        },
+        {
+          "name": "List Bills",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "GET", "url": "{{baseUrl}}/api/bills/?page=1&limit=20"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "item": [
+        {
+          "name": "Generate Invoice",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "POST", "url": "{{baseUrl}}/api/invoices/generate",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"extracted_bill_id\": \"b-001\",\n  \"patient_id\": \"p-001\",\n  \"provider_id\": \"pr-001\",\n  \"line_items\": [\n    { \"cpt_code\": \"99213\", \"icd10_codes\": [\"J45.909\"], \"description\": \"Office visit\", \"quantity\": 1, \"unit_price\": 150.00, \"total\": 150.00 },\n    { \"cpt_code\": \"94640\", \"icd10_codes\": [\"J45.909\"], \"description\": \"Nebulizer\", \"quantity\": 1, \"unit_price\": 45.00, \"total\": 45.00 }\n  ],\n  \"subtotal\": 195.00,\n  \"tax_amount\": 0.00,\n  \"discount_amount\": 0.00,\n  \"total_amount\": 195.00,\n  \"balance_due\": 195.00\n}" }
+          }
+        },
+        {
+          "name": "Download Invoice PDF",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "GET", "url": "{{baseUrl}}/api/invoices/INV-202406-A1B2C3/pdf"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "Submit Claim",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "POST", "url": "{{baseUrl}}/api/claims/submit",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"invoice_id\": \"inv-001\",\n  \"patient_insurance_id\": \"ins-001\",\n  \"form_type\": \"CMS-1500\",\n  \"diagnosis_codes\": [\"J45.909\"],\n  \"procedure_codes\": [\"99213\", \"94640\"],\n  \"date_of_service\": \"2024-06-01\",\n  \"total_billed\": 195.00,\n  \"provider_npi\": \"1234567890\"\n}" }
+          }
+        },
+        {
+          "name": "Post EOB",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "POST", "url": "{{baseUrl}}/api/claims/CLM-20240601-A1B2C3D4/post-eob",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"allowed_amount\": 155.00,\n  \"paid_amount\": 155.00,\n  \"patient_responsibility\": 40.00\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Denials",
+      "item": [
+        {
+          "name": "Analyze Denial",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "POST", "url": "{{baseUrl}}/api/denials/analyze",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"claim_id\": \"CLM-20240520-E5F6G7H8\",\n  \"denial_code\": \"CO-4\",\n  \"denial_reason\": \"CPT inconsistent with modifier\",\n  \"claim_data\": { \"cpt_codes\": [\"99213\", \"94640\"], \"icd10\": [\"J45.909\"] }\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create Stripe Intent",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "POST", "url": "{{baseUrl}}/api/payments/create-intent",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"invoice_number\": \"INV-202406-A1B2C3\",\n  \"amount_cents\": 4000,\n  \"patient_email\": \"john.doe@email.com\",\n  \"description\": \"Copay for June 2024 visit\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get Stats",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+            "method": "GET", "url": "{{baseUrl}}/api/dashboard/stats"
+          }
+        }
+      ]
+    }
+  ]
+}

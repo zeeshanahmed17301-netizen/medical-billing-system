@@ -1,0 +1,95 @@
+{
+  "_comment": "Sample input: Doctor's bill data as would be extracted from a PDF/image",
+  "raw_bill": {
+    "filename": "Dr_Smith_bill.pdf",
+    "provider": {
+      "name": "Dr. Sarah Smith, MD",
+      "facility": "City Medical Center",
+      "npi": "1234567890",
+      "address": "456 Health Avenue, Suite 200, Austin, TX 78702",
+      "phone": "(512) 555-5678",
+      "tax_id": "75-1234567"
+    },
+    "patient": {
+      "name": "John Doe",
+      "patient_id": "P-00123",
+      "dob": "1985-03-15",
+      "address": "123 Main Street, Austin, TX 78701",
+      "phone": "(512) 555-1234",
+      "email": "john.doe@email.com",
+      "insurance": {
+        "primary": {
+          "payer": "BlueCross BlueShield",
+          "member_id": "BCB123456789",
+          "group": "GRP-5550",
+          "plan": "PPO Plus"
+        }
+      }
+    },
+    "date_of_service": "2024-06-01",
+    "line_items": [
+      {
+        "cpt_code": "99213",
+        "icd10_codes": ["J45.909"],
+        "description": "Office visit - outpatient, moderate complexity",
+        "quantity": 1,
+        "unit_price": 150.00,
+        "total": 150.00
+      },
+      {
+        "cpt_code": "94640",
+        "icd10_codes": ["J45.909"],
+        "description": "Pressurized or non-pressurized inhalation treatment",
+        "quantity": 1,
+        "unit_price": 45.00,
+        "total": 45.00
+      }
+    ],
+    "subtotal": 195.00,
+    "tax": 0.00,
+    "total_charged": 195.00
+  },
+  "expected_extracted_output": {
+    "overall_confidence": 0.91,
+    "patient": { "name": "John Doe", "dob": "1985-03-15", "patient_id": "P-00123", "_confidence": 0.95 },
+    "provider": { "name": "Dr. Sarah Smith, MD", "npi": "1234567890", "_confidence": 0.98 },
+    "date_of_service": "2024-06-01",
+    "date_of_service_confidence": 0.97,
+    "diagnosis_codes": ["J45.909"],
+    "line_items": [
+      { "cpt_code": "99213", "icd10_codes": ["J45.909"], "description": "Office visit - moderate complexity", "quantity": 1, "unit_price": 150.00, "total": 150.00, "_confidence": 0.93 },
+      { "cpt_code": "94640", "icd10_codes": ["J45.909"], "description": "Nebulizer treatment", "quantity": 1, "unit_price": 45.00, "total": 45.00, "_confidence": 0.88 }
+    ],
+    "subtotal": 195.00,
+    "tax": 0.00,
+    "total_charged": 195.00,
+    "code_validation": {
+      "overall_status": "passed",
+      "validations": [
+        { "cpt_code": "99213", "icd10_code": "J45.909", "status": "passed", "suggestion": "Valid — office visit for asthma management", "drg_code": "204", "drg_weight": 0.8 },
+        { "cpt_code": "94640", "icd10_code": "J45.909", "status": "passed", "suggestion": "Appropriate nebulizer treatment for asthma" }
+      ]
+    }
+  },
+  "expected_invoice_output": {
+    "invoice_number": "INV-202406-A1B2C3",
+    "issue_date": "2024-06-01",
+    "due_date": "2024-07-01",
+    "total_amount": 195.00,
+    "payment_url": "https://pay.medicalbilling.com/invoice/INV-202406-A1B2C3"
+  },
+  "expected_claim_output": {
+    "claim_number": "CLM-20240601-A1B2C3D4",
+    "form_type": "CMS-1500",
+    "payer": "BlueCross BlueShield",
+    "total_billed": 195.00,
+    "status": "submitted"
+  },
+  "expected_eob_scenario": {
+    "allowed_amount": 155.00,
+    "paid_amount": 155.00,
+    "patient_responsibility": 40.00,
+    "adjustment": 40.00,
+    "final_patient_balance": 40.00
+  }
+}
